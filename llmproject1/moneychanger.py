@@ -89,7 +89,7 @@ def call_llm(textbox_input) -> Dict:
     except Exception as e:
         print(f"Exception {e} for {textbox_input}")
     else:
-        return response#.choices[0].message.content
+        return response.choices[0].message.content
 
 @traceable
 def run_pipeline(user_input):
