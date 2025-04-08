@@ -3,9 +3,10 @@ import numpy as np
 import pickle
 import openai
 import os
-
+from dotenv import load_dotenv
+load_dotenv
 # Set your OpenAI API key
-openai_api_key = os.getenv("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")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OpenAI API key not set! Please set it using `export OPENAI_API_KEY=<your_api_key>` and retry.")
 
