@@ -46,7 +46,7 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
     try:
         # Generate embedding of the user query
         response = client.embeddings.create(
-            model="gpt-4o",
+            model="text-embedding-3-large",
             input=user_query
         )
         query_embedding = np.array(response["data"][0]["embedding"])

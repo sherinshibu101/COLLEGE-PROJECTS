@@ -36,7 +36,7 @@ def embed_text_chunks(chunks, batch_size=32):
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
         response = client.embeddings.create(
-            model="text-embedding-ada-002",
+            model="text-embedding-3-large",
             input=batch
         )
         batch_embeddings = [datum["embedding"] for datum in response["data"]]
