@@ -23,7 +23,7 @@ client = OpenAI(
 )
 
 response = client.embeddings.create(
-    input=["first phrase", "second phrase", "third phrase"],
+    input=["user_query"],
     model=model_name,
 )
 
@@ -74,7 +74,7 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
             raise ValueError("User query must be a non-empty string.")
 
         # Generate embedding of the user query
-        response = client.embed(
+        response = client.responses.create(
             input=[user_query],
             model=model_name
         )

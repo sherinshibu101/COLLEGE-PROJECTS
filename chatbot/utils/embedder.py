@@ -3,12 +3,23 @@ import numpy as np
 import pickle
 import os
 from dotenv import load_dotenv
-
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
+token = os.environ["GITHUB_TOKEN"]
+endpoint = "https://models.inference.ai.azure.com"
+model_name = "text-embedding-3-large"
 
+client = OpenAI(
+    base_url=endpoint,
+    api_key=token,
+)
 
+response = client.embeddings.create(
+    input=["input_query"],
+    model=model_name,
+)
 # Embed text chunks using Azure OpenAI's embedding model
 def embed_text_chunks(chunks, batch_size=32):
     """
