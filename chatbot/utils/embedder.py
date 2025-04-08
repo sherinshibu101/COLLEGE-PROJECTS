@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 load_dotenv
 # Set your OpenAI API key
 openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
-    raise ValueError("OpenAI API key not set! Please set it using `export OPENAI_API_KEY=<your_api_key>` and retry.")
 
 # Embed text chunks using OpenAI's embedding model
 def embed_text_chunks(chunks, batch_size=32):
