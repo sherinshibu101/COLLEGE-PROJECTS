@@ -8,14 +8,19 @@ from utils.embedder import (
     build_faiss_index,
     query_faiss_index
 )
-import openai
 import numpy as np
 from openai import OpenAI
 
-client = OpenAI(api_key=openai_api_key)
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+token = os.environ["GITHUB_TOKEN"]
+endpoint = "https://models.inference.ai.azure.com"
+model_name = "gpt-4o"
+
+client = OpenAI(
+    base_url=endpoint,
+    api_key=token,
+)
 
 # Chatbot Initialization
 def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
@@ -41,7 +46,7 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
     try:
         # Generate embedding of the user query
         response = client.embeddings.create(
-            model="text-embedding-ada-002",
+            model="gpt-4o",
             input=user_query
         )
         query_embedding = np.array(response["data"][0]["embedding"])
@@ -60,8 +65,8 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
         Provide a concise and accurate response:
         """
 
-        chat_response = client.chat.completions.create()(
-            model="gpt-4",
+        chat_response = client.chat.completions.create(
+            model=model_name,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant who provides information based on context."},
                 {"role": "user", "content": prompt},
