@@ -12,8 +12,7 @@ import openai
 import numpy as np
 from openai import OpenAI
 
-client = OpenAI()
-
+client = OpenAI(api_key=openai_api_key)
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
