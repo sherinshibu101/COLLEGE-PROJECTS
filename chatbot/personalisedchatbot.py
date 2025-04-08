@@ -10,6 +10,9 @@ from utils.embedder import (
 )
 import openai
 import numpy as np
+from openai import OpenAI
+
+client = OpenAI()
 
 # Load environment variables
 load_dotenv()
@@ -38,9 +41,9 @@ def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
 def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=3):
     try:
         # Generate embedding of the user query
-        response = openai.Embedding.create(
+        response = client.embeddings.create(
             model="text-embedding-ada-002",
-            input=[user_query]
+            input=user_query
         )
         query_embedding = np.array(response["data"][0]["embedding"])
 
@@ -58,7 +61,7 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
         Provide a concise and accurate response:
         """
 
-        chat_response = openai.ChatCompletion.create(
+        chat_response = client.chat.completions.create()(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant who provides information based on context."},

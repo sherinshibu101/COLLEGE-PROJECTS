@@ -4,19 +4,25 @@ import pickle
 import openai
 import os
 from dotenv import load_dotenv
-load_dotenv
+from openai import OpenAI
+
+client = OpenAI()
+# Load environment variables
+load_dotenv()
+
 # Set your OpenAI API key
 openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OpenAI API key not set! Please set it using `export OPENAI_API_KEY=<your_api_key>` and retry.")
 
 # Embed text chunks using OpenAI's embedding model
 def embed_text_chunks(chunks, batch_size=32):
     embeddings = []
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
-        response = openai.Embedding.create(
+        response = client.embeddings.create(
             model="text-embedding-ada-002", 
             input=batch, 
-            api_key=openai_api_key
         )
         batch_embeddings = [datum["embedding"] for datum in response["data"]]
         embeddings.extend(batch_embeddings)
@@ -25,6 +31,20 @@ def embed_text_chunks(chunks, batch_size=32):
     # Normalize for cosine similarity
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
     return embeddings / norms
+
+# Build FAISS index
+def build_faiss_index(embeddings):
+    """
+    Build a FAISS index for the given embeddings.
+    Args:
+        embeddings (np.ndarray): Array of embeddings.
+    Returns:
+        faiss.IndexFlatIP: FAISS index for the embeddings.
+    """
+    dim = embeddings.shape[1]  # Dimension of the embeddings
+    index = faiss.IndexFlatIP(dim)  # Inner product for cosine similarity
+    index.add(embeddings)  # Add embeddings to the index
+    return index
 
 # Build FAISS index with metadata (text chunks mapped to embeddings)
 def build_faiss_index_with_metadata(embeddings, chunks):
