@@ -1,31 +1,18 @@
 import faiss
 import numpy as np
 import pickle
-import openai
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+
 
 # Load environment variables
 load_dotenv()
 
-# Set your Azure OpenAI API key and endpoint
-openai_api_key = os.getenv("GITHUB_TOKEN")
-endpoint = "https://models.inference.ai.azure.com"
 
-if not openai_api_key:
-    raise ValueError("OpenAI API key not set! Please set it using `export OPENAI_API_KEY=<your_api_key>` and retry.")
-
-# Initialize OpenAI client with Azure endpoint
-client = OpenAI(
-    base_url=endpoint,
-    api_key=openai_api_key,
-)
-
-# Embed text chunks using OpenAI's embedding model
+# Embed text chunks using Azure OpenAI's embedding model
 def embed_text_chunks(chunks, batch_size=32):
     """
-    Embed text chunks using OpenAI's embedding model.
+    Embed text chunks using Azure OpenAI's embedding model.
     Args:
         chunks (list of str): List of text chunks to embed.
         batch_size (int): Number of chunks to process in a single batch.
@@ -35,12 +22,12 @@ def embed_text_chunks(chunks, batch_size=32):
     embeddings = []
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
-        response = client.embeddings.create(
-            model="text-embedding-3-large",
-            input=batch
+        response = client.embed(
+            input=batch,
+            model=model_name
         )
-        batch_embeddings = [datum["embedding"] for datum in response["data"]]
-        embeddings.extend(batch_embeddings)
+        for item in response.data:
+            embeddings.append(item.embedding)
     embeddings = np.array(embeddings)
 
     # Normalize for cosine similarity

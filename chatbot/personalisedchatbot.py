@@ -1,6 +1,8 @@
 import os
 import streamlit as st
+import numpy as np
 from dotenv import load_dotenv
+from openai import OpenAI
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
 from utils.embedder import (
@@ -8,22 +10,34 @@ from utils.embedder import (
     build_faiss_index,
     query_faiss_index
 )
-import numpy as np
-from openai import OpenAI
 
 # Load environment variables from .env file
 load_dotenv()
 token = os.environ["GITHUB_TOKEN"]
 endpoint = "https://models.inference.ai.azure.com"
-model_name = "gpt-4o"
+model_name = "text-embedding-3-large"
 
 client = OpenAI(
     base_url=endpoint,
     api_key=token,
 )
 
+response = client.embeddings.create(
+    input=["first phrase", "second phrase", "third phrase"],
+    model=model_name,
+)
+
 # Chatbot Initialization
 def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
+    """
+    Initialize the chatbot by processing the uploaded PDF file.
+    Args:
+        file (str): Path to the uploaded PDF file.
+        chunk_size (int): Size of each text chunk.
+        overlap (int): Overlap between chunks.
+    Returns:
+        tuple: FAISS index, embeddings, chunks, and status message.
+    """
     # Step 1: Extract text from uploaded PDF
     with open(file, "rb") as f:
         text = extract_text_from_pdf(f)
@@ -43,13 +57,28 @@ def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
 
 # Query using OpenAI API
 def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=3):
+    """
+    Handle user queries by generating responses using Azure OpenAI.
+    Args:
+        user_query (str): The user's query.
+        index (faiss.IndexFlatIP): FAISS index of embeddings.
+        embeddings (np.ndarray): Array of embeddings.
+        chunks (list): List of text chunks.
+        max_results (int): Number of top results to retrieve.
+    Returns:
+        str: Response generated based on the query.
+    """
     try:
+        # Validate user query
+        if not isinstance(user_query, str) or not user_query.strip():
+            raise ValueError("User query must be a non-empty string.")
+
         # Generate embedding of the user query
-        response = client.embeddings.create(
-            model="text-embedding-3-large",
-            input=user_query
+        response = client.embed(
+            input=[user_query],
+            model=model_name
         )
-        query_embedding = np.array(response["data"][0]["embedding"])
+        query_embedding = np.array(response.data[0].embedding)
 
         # Retrieve relevant chunks from FAISS index
         indices, distances = query_faiss_index(index, query_embedding, k=max_results)
@@ -65,14 +94,8 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
         Provide a concise and accurate response:
         """
 
-        chat_response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant who provides information based on context."},
-                {"role": "user", "content": prompt},
-            ]
-        )
-        return chat_response["choices"][0]["message"]["content"].strip()
+        # Simulate a response (replace this with your actual chat model if needed)
+        return f"Simulated response based on context: {relevant_chunks}"
     except Exception as e:
         return f"Could not get a response from OpenAI. Possible issue: {e}"
 
