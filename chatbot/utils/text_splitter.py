@@ -2,38 +2,26 @@ import re
 
 def split_text_into_chunks(text, chunk_size=500, overlap=100):
     """
-    Splits a long text into smaller, coherent chunks based on sentences.
-
+    Splits text into coherent chunks with sentence awareness.
     Args:
-        text (str): The input text to split.
-        chunk_size (int): The maximum size (in number of characters) for each chunk.
-        overlap (int): The number of overlapping characters between consecutive chunks.
-
+        text (str): Input text to split.
+        chunk_size (int): Max characters per chunk.
+        overlap (int): Overlapping characters between chunks.
     Returns:
-        list: A list of text chunks, maintaining coherence between sentences.
+        list[str]: List of text chunks.
     """
-    # Split text into sentences based on punctuation
     sentences = re.split(r'(?<=[.!?]) +', text)
-    
     chunks = []
     current_chunk = ""
-
-    for sentence in sentences:
-        # Check if adding the sentence exceeds the chunk size
-        if len(current_chunk) + len(sentence) <= chunk_size:
-            current_chunk += " " + sentence.strip()  # Add the sentence to the current chunk
-        else:
-            # Add the current chunk to the chunks list
-            chunks.append(current_chunk.strip())
-            
-            # Start a new chunk with overlap
-            if overlap > 0 and len(current_chunk) > overlap:
-                current_chunk = current_chunk[-overlap:]  # Take the last `overlap` characters
-            else:
-                current_chunk = ""
-            current_chunk += " " + sentence.strip()
     
-    # Add the last chunk if it exists
+    for sentence in sentences:
+        if len(current_chunk) + len(sentence) <= chunk_size:
+            current_chunk += f" {sentence.strip()}"
+        else:
+            chunks.append(current_chunk.strip())
+            current_chunk = current_chunk[-overlap:] if overlap > 0 else ""
+            current_chunk += f" {sentence.strip()}"
+    
     if current_chunk:
         chunks.append(current_chunk.strip())
     

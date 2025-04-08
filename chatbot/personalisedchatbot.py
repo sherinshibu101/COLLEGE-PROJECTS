@@ -13,6 +13,7 @@ from utils.embedder import (
     save_index_with_metadata,
     build_faiss_index_with_metadata,
 )
+import faiss
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,11 +24,6 @@ model_name = "text-embedding-3-large"
 client = OpenAI(
     base_url=endpoint,
     api_key=token,
-)
-
-response = client.embeddings.create(
-    input=["user_query"],
-    model=model_name,
 )
 
 # Chatbot Initialization
@@ -77,7 +73,7 @@ def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=
             raise ValueError("User query must be a non-empty string.")
 
         # Generate embedding of the user query
-        response = client.responses.create(
+        response = client.embeddings.create(
             input=[user_query],
             model=model_name
         )

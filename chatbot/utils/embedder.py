@@ -4,6 +4,9 @@ import pickle
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import re
+from utils.pdf_loader import extract_text_from_pdf
+from utils.text_splitter import split_text_into_chunks
 
 # Load environment variables
 load_dotenv()
@@ -16,11 +19,6 @@ client = OpenAI(
     api_key=token,
 )
 
-response = client.embeddings.create(
-    input=["input_query"],
-    model=model_name,
-)
-# Embed text chunks using Azure OpenAI's embedding model
 def embed_text_chunks(chunks, batch_size=32):
     """
     Embed text chunks using Azure OpenAI's embedding model.
@@ -30,10 +28,15 @@ def embed_text_chunks(chunks, batch_size=32):
     Returns:
         np.ndarray: Normalized embeddings for the text chunks.
     """
+    # Validate input
+    if not isinstance(chunks, list) or not all(isinstance(chunk, str) and chunk.strip() for chunk in chunks):
+        raise ValueError("Input 'chunks' must be a list of non-empty strings.")
+
     embeddings = []
     for i in range(0, len(chunks), batch_size):
         batch = chunks[i:i + batch_size]
-        response = client.embed(
+        print(f"Processing batch: {batch}")  # Debugging statement
+        response = client.embeddings.create(
             input=batch,
             model=model_name
         )
