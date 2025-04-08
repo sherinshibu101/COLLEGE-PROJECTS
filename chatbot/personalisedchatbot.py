@@ -8,7 +8,10 @@ from utils.text_splitter import split_text_into_chunks
 from utils.embedder import (
     embed_text_chunks,
     build_faiss_index,
-    query_faiss_index
+    query_faiss_index,
+    load_index_with_metadata,
+    save_index_with_metadata,
+    build_faiss_index_with_metadata,
 )
 
 # Load environment variables from .env file
