@@ -89,4 +89,3 @@ style_options = [
 Created with ❤️ by **Sherin Shibu**  
 📩 [sherinshibu149@gmail.com](mailto:sherinshibu149@gmail.com)  
 🌐 [Live Demo](https://12pdfchatbot.streamlit.app/)
-```
