@@ -1,4 +1,4 @@
-mport os
+import os
 import streamlit as st
 import numpy as np
 from dotenv import load_dotenv
@@ -21,102 +21,95 @@ load_dotenv()
 token = os.environ["GITHUB_TOKEN"]
 endpoint = "https://models.inference.ai.azure.com"
 embedding_model = "text-embedding-3-large"
-chat_model = "gpt-4"  # or "gpt-35-turbo" for Azure
+chat_model = "gpt-4o"  # or "gpt-35-turbo" for Azure
 
 client = OpenAI(
     base_url=endpoint,
     api_key=token,
 )
 
-def generate_response_with_gpt(query, context):
-    """Generate response using GPT-4 with the retrieved context."""
+# Chatbot Initialization
+def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
+    """
+    Initialize the chatbot by processing the uploaded PDF file.
+    Args:
+        file (str): Path to the uploaded PDF file.
+        chunk_size (int): Size of each text chunk.
+        overlap (int): Overlap between chunks.
+    Returns:
+        tuple: FAISS index, embeddings, chunks, and status message.
+    """
+    # Step 1: Extract text from uploaded PDF
+    text = extract_text_from_pdf(file)
+    if not text.strip():
+        return None, None, None, "The uploaded PDF is empty or could not be processed. Please try a different file."
+
+    # Step 2: Split text into chunks
+    chunks = split_text_into_chunks(text, chunk_size=chunk_size, overlap=overlap)
+
+    # Step 3: Embed chunks
+    embeddings = embed_text_chunks(chunks)
+
+    # Step 4: Build FAISS index
+    index = build_faiss_index(embeddings)
+
+    return index, embeddings, chunks, "Chatbot initialized successfully!"
+
+def generate_response_with_gpt(query, context, user_request_style="default"):
+    """
+    Generate a response using GPT-4 with the retrieved context.
+    The response is customized based on the user's preferred style of explanation.
+
+    Parameters:
+    - query: The user's query string.
+    - context: The relevant context string (e.g., PDF content).
+    - user_request_style: The user's preferred style of explanation.
+    
+    Returns:
+    - The response content (formatted to match user preferences).
+    """
     try:
+        # Define a structured and dynamic prompt that adapts to the user's query.
+        structured_prompt = """
+        You are a helpful assistant that provides structured and clear answers based on the provided context. 
+        The answers should be:
+        1. Well-structured with clear points or sections.
+        2. Adapted to the user's requested style of explanation.
+
+        ### Rules:
+        - If the user specifies "explain like I'm 5", simplify explanations as much as possible, avoiding technical jargon, and use simple sentences. 
+        - If requested in another specific style, adapt accordingly. 
+        - Always output the response in a structured manner with clearly marked sections, bullet points, and numbered lists when appropriate.
+
+        Context:
+        {context}
+
+        User Query:
+        {query}
+
+        User's Preferred Style: {user_request_style}
+
+        Answer:
+        """
+        # Prepare the combined prompt with user details and their preferred explanation style.
+        prompt = structured_prompt.format(context=context, query=query, user_request_style=user_request_style)
+
+        # Generate the response using GPT.
         response = client.chat.completions.create(
             model=chat_model,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that answers questions based on the provided context."},
-                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer:"}
+                {"role": "system", "content": "You are a highly capable assistant."},
+                {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
-            max_tokens=500
+            temperature=0.7,  # Adjust for balanced creativity and accuracy.
+            max_tokens=1000   # Increase token limit to allow for detailed responses.
         )
-        return response.choices[0].message.content
+
+        # Return the generated response content to the user.
+        return response.choices[0].message.content.strip()
     except Exception as e:
+        # Handle potential errors gracefully.
         return f"Error generating response: {str(e)}"
-
-def handle_query_with_openai(user_query, index, chunks, max_results=3):
-    """
-    Handle user queries with GPT-4 integration.
-    Args:
-        user_query (str): User's query
-        index (faiss.Index): FAISS index
-        chunks (list): Text chunks
-        max_results (int): Number of relevant chunks to retrieve
-    Returns:
-        str: Generated response
-    """
-    try:
-        # Generate query embedding
-        response = client.embeddings.create(
-            input=[user_query],
-            model=embedding_model
-        )
-        query_embedding = np.array(response.data[0].embedding)
-
-        # Retrieve relevant chunks
-        indices, _ = query_faiss_index(index, query_embedding, k=max_results)
-        relevant_chunks = [chunks[idx] for idx in indices]
-        context = "\n\n".join(relevant_chunks)
-
-        # Generate response with GPT-4
-        return generate_response_with_gpt(user_query, context)
-        
-    except Exception as e:
-        return f"Error processing query: {str(e)}"
-
-# Query using OpenAI API
-def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=3):
-    """
-    Handle user queries by generating responses using Azure OpenAI.
-    Args:
-        user_query (str): The user's query.
-        index (faiss.IndexFlatIP): FAISS index of embeddings.
-        embeddings (np.ndarray): Array of embeddings.
-        chunks (list): List of text chunks.
-        max_results (int): Number of top results to retrieve.
-    Returns:
-        str: Response generated based on the query.
-    """
-    try:
-        # Validate user query
-        if not isinstance(user_query, str) or not user_query.strip():
-            raise ValueError("User query must be a non-empty string.")
-
-        # Generate embedding of the user query
-        response = client.embeddings.create(
-            input=[user_query],
-            model=model_name
-        )
-        query_embedding = np.array(response.data[0].embedding)
-
-        # Retrieve relevant chunks from FAISS index
-        indices, distances = query_faiss_index(index, query_embedding, k=max_results)
-
-        # Retrieve the top chunks
-        relevant_chunks = " ".join([chunks[idx] for idx in indices])
-
-        # Construct prompt
-        prompt = f"""
-        You are a helpful assistant. Use the following extracted context from a document to answer the user's query.\n\n
-        Context: {relevant_chunks}\n\n
-        User Query: {user_query}\n\n
-        Provide a concise and accurate response:
-        """
-
-        # Simulate a response (replace this with your actual chat model if needed)
-        return f"Simulated response based on context: {relevant_chunks}"
-    except Exception as e:
-        return f"Could not get a response from OpenAI. Possible issue: {e}"
 
 # Streamlit Interface
 st.set_page_config(page_title="Personalized PDF Chatbot", layout="centered")
@@ -137,11 +130,24 @@ if uploaded_file is not None:
         st.error(status)
     else:
         st.success("Chatbot initialized! You can now start asking questions.")
+        
+        # Add style selector
+        style_options = ["default", "explain like I'm 5", "technical", "brief"]
+        selected_style = st.selectbox("How would you like the explanation?", style_options)
+        
         user_query = st.text_input("💬 Enter your query:")
-
+        
         if user_query:
-            with st.spinner("Generating response from OpenAI..."):
-                response = handle_query_with_openai(user_query, index, embeddings, chunks)
+            with st.spinner("Generating response..."):
+                # Get query embedding
+                query_embedding = get_query_embedding(user_query)
+                # Get relevant chunks
+                indices, _ = query_faiss_index(index, query_embedding, k=3)
+                relevant_chunks = [chunks[idx] for idx in indices]
+                context = "\n\n".join(relevant_chunks)
+                # Generate response with style
+                response = generate_response_with_gpt(user_query, context, selected_style)
+            
             st.write("### 🧠 Response:")
             st.write(response)
 

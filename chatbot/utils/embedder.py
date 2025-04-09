@@ -4,7 +4,6 @@ import pickle
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import re
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
 
