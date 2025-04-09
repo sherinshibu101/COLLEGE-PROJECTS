@@ -90,7 +90,3 @@ Created with ❤️ by **Sherin Shibu**
 📩 [sherinshibu149@gmail.com](mailto:sherinshibu149@gmail.com)  
 🌐 [Live Demo](https://12pdfchatbot.streamlit.app/)
 ```
-
----
-
-Let me know if you’d like to auto-generate this as a file in your GitHub project (`README.md`) or want badges for forks/stars/issues too!
