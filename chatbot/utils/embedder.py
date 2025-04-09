@@ -48,6 +48,18 @@ def embed_text_chunks(chunks, batch_size=32):
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
     return embeddings / norms
 
+def get_query_embedding(query, client=None):
+    """Helper to get embedding for a single query"""
+    if client is None:
+        client = OpenAI(base_url=endpoint, api_key=token)
+    
+    response = client.embeddings.create(
+        input=[query],
+        model=model_name
+    )
+    embedding = np.array(response.data[0].embedding)
+    return embedding / np.linalg.norm(embedding)
+
 # Build FAISS index
 def build_faiss_index(embeddings):
     """

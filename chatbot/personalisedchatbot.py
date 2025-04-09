@@ -1,4 +1,4 @@
-import os
+mport os
 import streamlit as st
 import numpy as np
 from dotenv import load_dotenv
@@ -12,47 +12,67 @@ from utils.embedder import (
     load_index_with_metadata,
     save_index_with_metadata,
     build_faiss_index_with_metadata,
+    get_query_embedding
 )
 import faiss
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 token = os.environ["GITHUB_TOKEN"]
 endpoint = "https://models.inference.ai.azure.com"
-model_name = "text-embedding-3-large"
+embedding_model = "text-embedding-3-large"
+chat_model = "gpt-4"  # or "gpt-35-turbo" for Azure
 
 client = OpenAI(
     base_url=endpoint,
     api_key=token,
 )
 
-# Chatbot Initialization
-def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
+def generate_response_with_gpt(query, context):
+    """Generate response using GPT-4 with the retrieved context."""
+    try:
+        response = client.chat.completions.create(
+            model=chat_model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that answers questions based on the provided context."},
+                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer:"}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error generating response: {str(e)}"
+
+def handle_query_with_openai(user_query, index, chunks, max_results=3):
     """
-    Initialize the chatbot by processing the uploaded PDF file.
+    Handle user queries with GPT-4 integration.
     Args:
-        file (str): Path to the uploaded PDF file.
-        chunk_size (int): Size of each text chunk.
-        overlap (int): Overlap between chunks.
+        user_query (str): User's query
+        index (faiss.Index): FAISS index
+        chunks (list): Text chunks
+        max_results (int): Number of relevant chunks to retrieve
     Returns:
-        tuple: FAISS index, embeddings, chunks, and status message.
+        str: Generated response
     """
-    # Step 1: Extract text from uploaded PDF
-    with open(file, "rb") as f:
-        text = extract_text_from_pdf(f)
-    if not text.strip():
-        return None, None, None, "The uploaded PDF is empty or could not be processed. Please try a different file."
+    try:
+        # Generate query embedding
+        response = client.embeddings.create(
+            input=[user_query],
+            model=embedding_model
+        )
+        query_embedding = np.array(response.data[0].embedding)
 
-    # Step 2: Split text into chunks
-    chunks = split_text_into_chunks(text, chunk_size=chunk_size, overlap=overlap)
+        # Retrieve relevant chunks
+        indices, _ = query_faiss_index(index, query_embedding, k=max_results)
+        relevant_chunks = [chunks[idx] for idx in indices]
+        context = "\n\n".join(relevant_chunks)
 
-    # Step 3: Embed chunks
-    embeddings = embed_text_chunks(chunks)
-
-    # Step 4: Build FAISS index
-    index = build_faiss_index(embeddings)
-
-    return index, embeddings, chunks, "Chatbot initialized successfully!"
+        # Generate response with GPT-4
+        return generate_response_with_gpt(user_query, context)
+        
+    except Exception as e:
+        return f"Error processing query: {str(e)}"
 
 # Query using OpenAI API
 def handle_query_with_openai(user_query, index, embeddings, chunks, max_results=3):
