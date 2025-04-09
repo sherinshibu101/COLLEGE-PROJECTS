@@ -1,8 +1,3 @@
-Sure! Here's the **continuation and completion** of your stylish README with full sections, completed formatting, and consistency:
-
----
-
-```markdown
 # 📄 Personalized PDF Chatbot
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
@@ -37,11 +32,6 @@ Created by [Sherin Shibu](mailto:sherinshibu149@gmail.com).
 2. **Install dependencies**
    ```bash
    pip install -r requirements.txt
-   ```
-
-3. **Set up environment**
-   ```bash
-   echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
    ```
 
 4. **Run the app**
