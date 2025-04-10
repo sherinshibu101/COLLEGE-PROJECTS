@@ -75,16 +75,7 @@ money-changer/
 └── .env                 # Environment variables (ignored by git)
 ```
 
-## Contributing 🤝
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements.
-
-## License 📜
-
-This project is licensed under the MIT License.
-
 ## 📧 Contact
 
 Created with ❤️ by **Sherin Shibu**  
 📩 [sherinshibu149@gmail.com](mailto:sherinshibu149@gmail.com)
-```
