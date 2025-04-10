@@ -32,3 +32,7 @@
    ```bash
    git clone https://github.com/sherinshibu101/sentiment-analysis-app.git
    cd sentiment-analysis-app
+
+## 📧 Contact
+Created with ❤️ by **Sherin Shibu**  
+📩 [sherinshibu149@gmail.com](mailto:sherinshibu149@gmail.com)  
