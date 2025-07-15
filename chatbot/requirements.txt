@@ -3,4 +3,4 @@ PyMuPDF==1.25.5
 sentence-transformers==4.0.2
 faiss-cpu==1.10.0
 python-dotenv==1.1.0
-azure-ai-inference
+azure-ai-inference=1.0.0b10
