@@ -10,14 +10,6 @@ token = st.secrets["GITHUB_TOKEN"]
 endpoint = "https://api.github.com/models/openai/text-embedding-3-large/infer"
 
 def embed_text_chunks(chunks, batch_size=32):
-    """
-    Embed text chunks using GitHub Models embedding API.
-    Args:
-        chunks (list of str): List of text chunks to embed.
-        batch_size (int): Number of chunks to process in a single batch.
-    Returns:
-        np.ndarray: Normalized embeddings for the text chunks.
-    """
     if not isinstance(chunks, list) or not all(isinstance(chunk, str) and chunk.strip() for chunk in chunks):
         raise ValueError("Input 'chunks' must be a list of non-empty strings.")
 
@@ -27,9 +19,17 @@ def embed_text_chunks(chunks, batch_size=32):
         batch = chunks[i:i + batch_size]
         print(f"Processing batch: {batch}")
         response = requests.post(endpoint, json={"inputs": batch}, headers=headers)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            st.error(f"Embedding API error: {e} - {response.text}")
+            raise
         data = response.json()
-        for item in data["embeddings"]:  # Adjust if API response differs!
+        # Debug: print(data) to inspect if "embeddings" is present
+        if "embeddings" not in data:
+            st.error(f"API response missing 'embeddings' key: {data}")
+            raise KeyError("API response missing 'embeddings' key")
+        for item in data["embeddings"]:
             embeddings.append(item)
     embeddings = np.array(embeddings)
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
@@ -40,10 +40,13 @@ def get_query_embedding(query):
     response = requests.post(endpoint, json={"inputs": [query]}, headers=headers)
     response.raise_for_status()
     data = response.json()
+    if "embeddings" not in data:
+        st.error(f"API response missing 'embeddings' key: {data}")
+        raise KeyError("API response missing 'embeddings' key")
     embedding = np.array(data["embeddings"][0])
     return embedding / np.linalg.norm(embedding)
 
-# --- FAISS code unchanged ---
+# FAISS code unchanged...
 def build_faiss_index(embeddings):
     dim = embeddings.shape[1]
     index = faiss.IndexFlatIP(dim)
