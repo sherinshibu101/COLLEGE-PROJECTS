@@ -7,12 +7,11 @@ import streamlit as st
 from azure.ai.inference import EmbeddingsClient
 from azure.core.credentials import AzureKeyCredential
 
-# Use environment variable or Streamlit secrets for the token
+# Get the GitHub token from Streamlit secrets or environment
 token = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
 endpoint = "https://models.github.ai/inference"
 model_name = "openai/text-embedding-3-large"
 
-# Initialize the Azure AI Inference Embeddings Client
 client = EmbeddingsClient(
     endpoint=endpoint,
     credential=AzureKeyCredential(token)
