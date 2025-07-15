@@ -11,9 +11,8 @@ from utils.embedder import embed_text_chunks, get_query_embedding, build_faiss_i
 # =======================
 # --- Chat Completion ---
 # =======================
-from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference import ChatCompletionsClient, ChatCompletionsOptions, ChatMessage
 from azure.core.credentials import AzureKeyCredential
-from azure.ai.inference.models import ChatCompletionsOptions, ChatMessage
 
 GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
 CHAT_ENDPOINT = "https://models.github.ai/inference"
