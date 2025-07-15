@@ -1,6 +1,5 @@
 streamlit==1.44.1
 PyMuPDF==1.25.5
-openai==1.71.0
 sentence-transformers==4.0.2
 faiss-cpu==1.10.0
 python-dotenv==1.1.0
