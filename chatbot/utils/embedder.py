@@ -1,15 +1,13 @@
 import faiss
 import numpy as np
 import pickle
-import os
-from dotenv import load_dotenv
+import streamlit as st
 from openai import OpenAI
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
 
-# Load environment variables
-load_dotenv()
-token = os.environ["GITHUB_TOKEN"]
+
+token = st.secrets["GITHUB_TOKEN"]
 endpoint = "https://models.inference.ai.azure.com"
 model_name = "text-embedding-3-large"
 
