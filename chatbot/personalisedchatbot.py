@@ -1,113 +1,49 @@
 import os
 import streamlit as st
 import numpy as np
-import requests
 import faiss
 import pickle
 
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
-
-# =======================
-# --- Embedding Code ---
-# =======================
-GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
-EMBEDDING_ENDPOINT = "https://api.github.com/models/openai/text-embedding-3-large/infer"
-CHAT_ENDPOINT = "https://api.github.com/models/openai/gpt-4o/infer"
-
-def embed_text_chunks(chunks, batch_size=32):
-    if not isinstance(chunks, list) or not all(isinstance(chunk, str) and chunk.strip() for chunk in chunks):
-        raise ValueError("Input 'chunks' must be a list of non-empty strings.")
-
-    embeddings = []
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-    for i in range(0, len(chunks), batch_size):
-        batch = chunks[i:i + batch_size]
-        response = requests.post(EMBEDDING_ENDPOINT, json={"inputs": batch}, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        if "embeddings" not in data:
-            st.error(f"Embedding API response missing 'embeddings' key: {data}")
-            raise KeyError("API response missing 'embeddings' key")
-        for item in data["embeddings"]:
-            embeddings.append(item)
-    embeddings = np.array(embeddings)
-    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-    return embeddings / norms
-
-def get_query_embedding(query):
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-    response = requests.post(EMBEDDING_ENDPOINT, json={"inputs": [query]}, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-    if "embeddings" not in data:
-        st.error(f"Embedding API response missing 'embeddings' key: {data}")
-        raise KeyError("API response missing 'embeddings' key")
-    embedding = np.array(data["embeddings"][0])
-    return embedding / np.linalg.norm(embedding)
-
-# =======================
-# --- FAISS Code ---
-# =======================
-def build_faiss_index(embeddings):
-    dim = embeddings.shape[1]
-    index = faiss.IndexFlatIP(dim)
-    index.add(embeddings)
-    return index
-
-def query_faiss_index(index, query_embedding, k=5):
-    if query_embedding.ndim == 1:
-        query_embedding = np.expand_dims(query_embedding, axis=0)
-    query_embedding = query_embedding / np.linalg.norm(query_embedding, axis=1, keepdims=True)
-    distances, indices = index.search(query_embedding, k)
-    return indices[0], distances[0]
-
-def save_index_with_metadata(index, chunks, index_file, metadata_file):
-    faiss.write_index(index, index_file)
-    with open(metadata_file, 'wb') as f:
-        pickle.dump(chunks, f)
-
-def load_index_with_metadata(index_file, metadata_file):
-    index = faiss.read_index(index_file)
-    with open(metadata_file, 'rb') as f:
-        chunks = pickle.load(f)
-    return index, chunks
+from utils.embedder import embed_text_chunks, get_query_embedding, build_faiss_index, query_faiss_index
 
 # =======================
 # --- Chat Completion ---
 # =======================
+from azure.ai.inference import ChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.inference.models import ChatCompletionsOptions, ChatMessage
+
+GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
+CHAT_ENDPOINT = "https://models.github.ai/inference"
+CHAT_MODEL = "openai/gpt-4o"
+
+chat_client = ChatCompletionsClient(
+    endpoint=CHAT_ENDPOINT,
+    credential=AzureKeyCredential(GITHUB_TOKEN)
+)
+
 def generate_response_with_gpt(query, context, user_request_style="default", temperature=0.7, max_tokens=1000):
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
-    system_prompt = "You are a highly capable assistant."
-    user_prompt = f"""
-        Context:
-        {context}
+    options = ChatCompletionsOptions(
+        messages=[
+            ChatMessage(role="system", content="You are a highly capable assistant."),
+            ChatMessage(role="user", content=f"""
+                Context:
+                {context}
 
-        User Query:
-        {query}
+                User Query:
+                {query}
 
-        User's Preferred Style: {user_request_style}
-        Answer:
-    """
-    payload = {
-        "inputs": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
+                User's Preferred Style: {user_request_style}
+                Answer:
+            """),
         ],
-        "parameters": {
-            "temperature": temperature,
-            "max_tokens": max_tokens
-        }
-    }
-    response = requests.post(CHAT_ENDPOINT, json=payload, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-    # Adjust if output structure changes!
-    if "choices" in data and len(data["choices"]) > 0 and "message" in data["choices"][0]:
-        return data["choices"][0]["message"]["content"].strip()
-    else:
-        st.error(f"Chat API response missing expected keys: {data}")
-        return "An error occurred while generating your response."
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
+    response = chat_client.complete(model=CHAT_MODEL, options=options)
+    return response.choices[0].message.content.strip()
 
 # =======================
 # --- Chatbot Logic ---
