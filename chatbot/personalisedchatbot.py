@@ -2,19 +2,17 @@ import os
 import streamlit as st
 import numpy as np
 import faiss
-import pickle
 
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
 from utils.embedder import embed_text_chunks, get_query_embedding, build_faiss_index, query_faiss_index
 
 # =======================
-# --- Chat Completion ---
+# --- Chat Completion (Azure AI Inference) ---
 # =======================
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
-from azure.ai.inference.models import ChatCompletionsOptions, ChatMessage
-
+from azure.ai.inference.models import SystemMessage, UserMessage
 
 GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
 CHAT_ENDPOINT = "https://models.github.ai/inference"
@@ -26,24 +24,27 @@ chat_client = ChatCompletionsClient(
 )
 
 def generate_response_with_gpt(query, context, user_request_style="default", temperature=0.7, max_tokens=1000):
-    options = ChatCompletionsOptions(
-        messages=[
-            ChatMessage(role="system", content="You are a highly capable assistant."),
-            ChatMessage(role="user", content=f"""
-                Context:
-                {context}
+    messages = [
+        SystemMessage("You are a highly capable assistant."),
+        UserMessage(
+            f"""
+            Context:
+            {context}
 
-                User Query:
-                {query}
+            User Query:
+            {query}
 
-                User's Preferred Style: {user_request_style}
-                Answer:
-            """),
-        ],
-        max_tokens=max_tokens,
+            User's Preferred Style: {user_request_style}
+            Answer:
+            """
+        ),
+    ]
+    response = chat_client.complete(
+        messages=messages,
         temperature=temperature,
+        max_tokens=max_tokens,
+        model=CHAT_MODEL
     )
-    response = chat_client.complete(model=CHAT_MODEL, options=options)
     return response.choices[0].message.content.strip()
 
 # =======================
