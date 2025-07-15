@@ -5,21 +5,54 @@ import faiss
 
 from utils.pdf_loader import extract_text_from_pdf
 from utils.text_splitter import split_text_into_chunks
-from utils.embedder import embed_text_chunks, get_query_embedding, build_faiss_index, query_faiss_index
 
 # =======================
-# --- Chat Completion (Azure AI Inference) ---
+# --- Azure AI Inference Imports ---
 # =======================
-from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference import ChatCompletionsClient, EmbeddingsClient
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import SystemMessage, UserMessage
 
 GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
-CHAT_ENDPOINT = "https://models.github.ai/inference"
+ENDPOINT = "https://models.github.ai/inference"
 CHAT_MODEL = "openai/gpt-4o"
+EMBEDDINGS_MODEL = "openai/text-embedding-3-large"
 
+# =======================
+# --- Embedding Logic ---
+# =======================
+def embed_text_chunks(chunks):
+    client = EmbeddingsClient(
+        endpoint=ENDPOINT,
+        credential=AzureKeyCredential(GITHUB_TOKEN),
+    )
+    response = client.embed(input=chunks, model=EMBEDDINGS_MODEL)
+    return [item.embedding for item in response.data]
+
+def get_query_embedding(query):
+    client = EmbeddingsClient(
+        endpoint=ENDPOINT,
+        credential=AzureKeyCredential(GITHUB_TOKEN),
+    )
+    response = client.embed(input=[query], model=EMBEDDINGS_MODEL)
+    return response.data[0].embedding
+
+def build_faiss_index(embeddings):
+    dim = len(embeddings[0])
+    index = faiss.IndexFlatL2(dim)
+    index.add(np.array(embeddings).astype('float32'))
+    return index
+
+def query_faiss_index(index, query_embedding, k=3):
+    query_vec = np.array([query_embedding]).astype('float32')
+    distances, indices = index.search(query_vec, k)
+    return indices[0], distances[0]
+
+# =======================
+# --- Chat Completion Logic ---
+# =======================
 chat_client = ChatCompletionsClient(
-    endpoint=CHAT_ENDPOINT,
+    endpoint=ENDPOINT,
     credential=AzureKeyCredential(GITHUB_TOKEN)
 )
 
@@ -48,7 +81,7 @@ def generate_response_with_gpt(query, context, user_request_style="default", tem
     return response.choices[0].message.content.strip()
 
 # =======================
-# --- Chatbot Logic ---
+# --- Chatbot Initialization ---
 # =======================
 def initialize_chatbot_from_file(file, chunk_size=500, overlap=100):
     text = extract_text_from_pdf(file)
