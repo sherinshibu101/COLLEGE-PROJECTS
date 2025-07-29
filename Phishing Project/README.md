@@ -31,12 +31,6 @@ The dataset includes several features extracted from websites (e.g., presence of
 
 ---
 
-## 📈 Objective
-
-To develop an effective phishing detection model that can help cybersecurity systems automatically flag suspicious websites.
-
----
-
 ## 🔧 Technologies Used
 
 - Python
@@ -44,34 +38,3 @@ To develop an effective phishing detection model that can help cybersecurity sys
 - Matplotlib & Seaborn (for visualization)
 - Hugging Face `datasets`
 - Scikit-learn (for modeling)
-
----
-
-## 💡 What This Demonstrates
-
-- Practical application of machine learning for cybersecurity
-- Ability to work with real-world, messy datasets
-- Understanding of class imbalance and evaluation metrics
-- End-to-end ML workflow from data loading to model evaluation
-
----
-
-## 📎 Files Included
-
-- `22355.ipynb`: Complete notebook with data analysis, preprocessing, modeling, and evaluation
-- `README.md`: Project overview
-
----
-
-## 👨‍💻 Author
-
-**SHERIN SHIBU**  
-Computer Science Undergrad | Aspiring Data Scientist  
-[www.linkedin.com/in/sherin-shibu-4628a1319]
-
----
-
-## 📫 Contact
-
-Feel free to reach out for collaboration or opportunities related to ML and cybersecurity!
-
