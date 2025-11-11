@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Drawing Canvas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Collaborative Drawing Canvas</h1>
+            <div class="connection-status">
+                <span id="status" class="status-indicator disconnected"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="toolbar">
+                <div class="tool-section">
+                    <h3>Tools</h3>
+                    <button id="tool-brush" class="tool-btn active" title="Brush (B)">
+                        <span class="icon">🖌️</span> Brush
+                    </button>
+                    <button id="tool-eraser" class="tool-btn" title="Eraser (E)">
+                        <span class="icon">🧹</span> Eraser
+                    </button>
+                    <button id="tool-clear" class="tool-btn" title="Clear Canvas">
+                        <span class="icon">🗑️</span> Clear
+                    </button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Color</h3>
+                    <input type="color" id="color-picker" value="#000000" title="Pick a color">
+                    <div id="color-preview" class="color-preview"></div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Stroke Width</h3>
+                    <input type="range" id="stroke-width" min="1" max="50" value="3">
+                    <span id="stroke-width-value">3</span>px
+                </div>
+
+                <div class="tool-section">
+                    <h3>History</h3>
+                    <button id="btn-undo" class="tool-btn" title="Undo (Ctrl+Z)">
+                        <span class="icon">↶</span> Undo
+                    </button>
+                    <button id="btn-redo" class="tool-btn" title="Redo (Ctrl+Y)">
+                        <span class="icon">↷</span> Redo
+                    </button>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Users Online</h3>
+                    <div id="users-list" class="users-list"></div>
+                </div>
+            </aside>
+
+            <main class="canvas-container">
+                <canvas id="drawing-canvas"></canvas>
+                <div id="cursor-layer" class="cursor-layer"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="websocket.js"></script>
+    <script src="canvas.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+
