@@ -1,7 +1,3 @@
-# Collaborative Drawing Canvas
-
-A real-time multi-user drawing application where multiple people can draw simultaneously on the same canvas with live synchronization.
-
 ## 🎯 Features
 
 - **Real-time Drawing Sync**: See other users' drawings as they draw (not after they finish)
@@ -37,28 +33,6 @@ npm start
 
 # Server will run on http://localhost:8080
 ```
-
-Then open your browser and navigate to `http://localhost:8080`
-
-## 🎮 How to Use
-
-### Single User
-1. Open the application in your browser
-2. Use the toolbar on the left to:
-   - Select **Brush** or **Eraser** tool
-   - Pick a color with the color picker
-   - Adjust stroke width with the slider
-   - Draw on the canvas
-   - Use **Undo/Redo** buttons or keyboard shortcuts (Ctrl+Z / Ctrl+Y)
-   - Click **Clear** to clear the entire canvas
-
-### Multi-User (Real-time Collaboration)
-1. Open the application in multiple browser tabs/windows
-2. Each user gets a unique color and name
-3. Start drawing in one tab - see it appear in real-time in other tabs
-4. Move your mouse - other users see your cursor position
-5. Use undo/redo - changes sync to all users
-6. Check "Users Online" section to see who's connected
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -130,14 +104,6 @@ collaborative-canvas/
 node test-websocket.js
 ```
 
-### Manual Testing
-See `TEST_GUIDE.md` for detailed testing instructions including:
-- Single user testing
-- Multi-user synchronization
-- Feature testing (drawing, eraser, colors, etc.)
-- Performance testing
-- Browser compatibility
-
 ## 🐛 Known Limitations
 
 1. **No Persistence**: Canvas data is not saved to database. Refreshing the page clears the canvas.
@@ -146,31 +112,11 @@ See `TEST_GUIDE.md` for detailed testing instructions including:
 4. **No Drawing Persistence**: No save/load functionality for sessions
 5. **Late Joiners**: Users who join after others have already drawn will only see new drawings made after they join (not previous drawings)
 
-## 🚀 Performance Characteristics
-
-- **Latency**: Drawing events are sent in real-time (typically <50ms)
-- **Throughput**: Handles 10+ concurrent users smoothly
-- **Canvas Size**: Supports full HD (1920x1080) and larger
-- **Operation History**: Stores up to 200 operations per room
-
 ## 🔐 Security Notes
 
 - No authentication implemented (suitable for local/trusted networks)
 - No input validation on drawing data (assumes trusted clients)
 - WebSocket connections are unencrypted (use WSS in production)
-
-## 📈 Scalability
-
-Current implementation:
-- Single server instance
-- In-memory room management
-- Suitable for small to medium groups (10-50 users)
-
-For production scaling:
-- Use Redis for room state management
-- Implement load balancing with multiple server instances
-- Add database persistence
-- Use WSS (WebSocket Secure) with SSL/TLS
 
 ## 🛠️ Development
 
@@ -187,30 +133,4 @@ For production scaling:
 - Use `curl` to test HTTP endpoints
 - Use WebSocket client tools to test messages
 
-## 📝 Time Spent
-
-- Project Setup: 30 minutes
-- Frontend Implementation: 1 hour
-- Backend Implementation: 1 hour
-- Real-time Synchronization: 45 minutes
-- Undo/Redo Implementation: 45 minutes
-- Testing & Bug Fixes: 1 hour
-- Documentation: 45 minutes
-- **Total: ~5.5 hours**
-
-## 📄 License
-
-MIT License - Feel free to use this project for learning and development.
-
-## 🤝 Contributing
-
-This is an assignment project. For improvements or bug reports, please create an issue or pull request.
-
-## 📞 Support
-
-For issues or questions:
-1. Check `TEST_GUIDE.md` for troubleshooting
-2. Review `ARCHITECTURE.md` for technical details
-3. Check browser console for error messages
-4. Verify server is running: `curl http://localhost:8080/health`
 
